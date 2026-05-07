@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Brief hebdomadaire — {{ brief.week_iso }}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .cat-work { background: #DBEAFE; border-color: #3B82F6; }
+  .cat-personal { background: #DCFCE7; border-color: #22C55E; }
+  .cat-family { background: #FEF3C7; border-color: #F59E0B; }
+  .cat-other { background: #F3E8FF; border-color: #A855F7; }
+  details > summary { cursor: pointer; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<div class="max-w-5xl mx-auto p-6 space-y-8">
+
+  <header class="space-y-2">
+    <p class="text-xs uppercase tracking-wide text-slate-500">Brief hebdomadaire</p>
+    <h1 class="text-3xl font-bold">{{ brief.week_iso }}
+      <span class="text-slate-500 font-normal text-base">
+        {{ brief.week_start | fmt_dt(HEADER_DATE_PATTERN) }} → {{ brief.week_end | fmt_dt(HEADER_DATE_PATTERN) }}
+      </span>
+    </h1>
+    <p class="text-xs text-slate-400">Généré le {{ brief.generated_at | fmt_dt(GENERATED_PATTERN) }} · Fuseau {{ brief.timezone }}</p>
+  </header>
+
+  {% if brief.narrative %}
+  <section class="bg-white rounded-2xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-2">La semaine à venir</h2>
+    <p class="leading-relaxed text-slate-700 whitespace-pre-line">{{ brief.narrative }}</p>
+  </section>
+  {% endif %}
+
+  <section class="bg-white rounded-2xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Événements par catégorie</h2>
+    {% if brief.events_by_category %}
+      <div class="grid md:grid-cols-2 gap-4">
+        {% for cat, events in brief.events_by_category.items() %}
+          <div class="rounded-xl border-l-4 cat-{{ cat if cat in ['work','personal','family'] else 'other' }} p-4">
+            <h3 class="font-semibold mb-2">{{ cat | cat_label }} <span class="text-slate-500 text-xs">({{ events|length }})</span></h3>
+            <ul class="space-y-1 text-sm">
+              {% for ev in events %}
+                <li>
+                  <span class="font-medium">{{ ev.start | fmt_dt }}</span>
+                  — {{ ev.title }}
+                  {% if ev.location %}<span class="text-slate-500">· {{ ev.location }}</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-slate-500 text-sm">Aucun événement.</p>
+    {% endif %}
+  </section>
+
+  <section class="bg-white rounded-2xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Vue de la semaine</h2>
+    <div class="grid md:grid-cols-7 gap-2 text-sm">
+      {% for day, slots in brief.free_slots_by_day.items() %}
+        <div class="border rounded-lg p-2 bg-slate-50 min-h-[140px]">
+          <p class="font-semibold mb-1 capitalize">{{ day | day_label }}</p>
+          {% set day_events = brief.events_by_day.get(day, []) %}
+          {% if day_events %}
+            <ul class="space-y-1 mb-2">
+              {% for ev in day_events %}
+                <li class="text-xs px-1 py-0.5 rounded cat-{{ ev.category if ev.category in ['work','personal','family'] else 'other' }}">
+                  {{ ev.start | fmt_time }} {{ ev.title[:24] }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if slots %}
+            <p class="text-[10px] uppercase text-slate-500 mt-1">Disponible</p>
+            <ul class="text-xs space-y-0.5">
+              {% for s in slots %}
+                <li class="text-emerald-700">{{ s.start | fmt_time }}–{{ s.end | fmt_time }} ({{ s.duration_min }} min)</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-xs text-slate-400 italic">Aucune disponibilité</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="bg-white rounded-2xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Mails à traiter</h2>
+    <div class="grid md:grid-cols-3 gap-4 text-sm">
+      <div>
+        <h3 class="font-semibold mb-2">En attente de réponse ({{ brief.mail_attention.awaiting_reply|length }})</h3>
+        <ul class="space-y-1">
+          {% for t in brief.mail_attention.awaiting_reply %}
+            <li class="border-l-2 border-rose-400 pl-2">
+              <p class="font-medium">{{ t.subject or "(sans objet)" }}</p>
+              <p class="text-xs text-slate-500">{{ t.last_inbound_from }} · {{ t.last_date | fmt_dt }}</p>
+            </li>
+          {% else %}
+            <li class="text-slate-400 italic">Aucun</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-2">Suivis ({{ brief.mail_attention.flagged|length }})</h3>
+        <ul class="space-y-1">
+          {% for m in brief.mail_attention.flagged %}
+            <li class="border-l-2 border-amber-400 pl-2">
+              <p class="font-medium">{{ m.subject or "(sans objet)" }}</p>
+              <p class="text-xs text-slate-500">{{ m.from_addr }} · {{ m.date | fmt_dt }}</p>
+            </li>
+          {% else %}
+            <li class="text-slate-400 italic">Aucun</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-2">Contacts prioritaires ({{ brief.mail_attention.vip|length }})</h3>
+        <ul class="space-y-1">
+          {% for m in brief.mail_attention.vip %}
+            <li class="border-l-2 border-indigo-400 pl-2">
+              <p class="font-medium">{{ m.subject or "(sans objet)" }}</p>
+              <p class="text-xs text-slate-500">{{ m.from_addr }} · {{ m.date | fmt_dt }}</p>
+            </li>
+          {% else %}
+            <li class="text-slate-400 italic">Aucun</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {% if brief.meetings_with_prep %}
+  <section class="bg-white rounded-2xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Préparation des réunions</h2>
+    <div class="space-y-3">
+      {% for ev in brief.meetings_with_prep %}
+        <details class="border rounded-lg p-3">
+          <summary class="font-medium">
+            {{ ev.start | fmt_dt }} — {{ ev.title }}
+            <span class="text-xs text-slate-500">({{ ev.attendees|length }} participants)</span>
+          </summary>
+          <div class="mt-3 space-y-2 text-sm">
+            <p><span class="font-semibold text-slate-600">Participants :</span> {{ ev.attendees|join(", ") }}</p>
+            {% if ev.location %}<p><span class="font-semibold text-slate-600">Lieu :</span> {{ ev.location }}</p>{% endif %}
+            {% if ev.prep_notes %}
+              <div>
+                <p class="font-semibold text-slate-600">Préparation :</p>
+                <p class="text-slate-700 whitespace-pre-line">{{ ev.prep_notes }}</p>
+              </div>
+            {% endif %}
+            {% if ev.prep_questions %}
+              <div>
+                <p class="font-semibold text-slate-600">Questions à préparer :</p>
+                <ul class="list-disc pl-5">
+                  {% for q in ev.prep_questions %}<li>{{ q }}</li>{% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+            {% if ev.related_threads %}
+              <div>
+                <p class="font-semibold text-slate-600">Échanges liés :</p>
+                <ul class="text-xs text-slate-600 space-y-1">
+                  {% for t in ev.related_threads %}
+                    <li>· {{ t.subject }} <span class="text-slate-400">({{ t.last_date | fmt_dt }})</span></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <footer class="text-xs text-slate-400 text-center pt-4">
+    weekly-brief · {{ brief.week_iso }}
+  </footer>
+</div>
+</body>
+</html>

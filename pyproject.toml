@@ -1,0 +1,58 @@
+[project]
+name = "weekly-brief"
+version = "0.1.0"
+description = "Weekly digest from IMAP + ICS calendars (HTML + email + markdown)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Sohaib Afifi", email = "me@sohaibafifi.com" }]
+license = { text = "MIT" }
+dependencies = [
+    "imap-tools>=1.6.0",
+    "icalendar>=5.0.11",
+    "recurring-ical-events>=2.2.3",
+    "httpx>=0.27.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.4.0",
+    "pyyaml>=6.0.1",
+    "jinja2>=3.1.4",
+    "python-dateutil>=2.9.0",
+    "tzdata>=2024.1",
+    "typer>=0.12.3",
+    "rich>=13.7.1",
+    "python-dotenv>=1.0.1",
+    "babel>=2.16.0",
+]
+
+[project.scripts]
+weekly-brief = "weekly_brief.cli:app"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.5.0",
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "respx>=0.21.1",
+    "freezegun>=1.5.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/weekly_brief"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"templates" = "weekly_brief/templates"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

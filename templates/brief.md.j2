@@ -1,0 +1,81 @@
+# Weekly Brief — {{ brief.week_iso }}
+{{ brief.week_start | fmt_dt(HEADER_DATE_PATTERN) }} → {{ brief.week_end | fmt_dt(HEADER_DATE_PATTERN) }} · {{ brief.timezone }}
+
+{% if brief.narrative %}
+## Week ahead
+
+{{ brief.narrative }}
+
+{% endif %}
+## Events by category
+
+{% if brief.events_by_category %}
+{% for cat, events in brief.events_by_category.items() %}
+### {{ cat|capitalize }} ({{ events|length }})
+
+{% for ev in events %}
+- **{{ ev.start | fmt_dt }}** — {{ ev.title }}{% if ev.location %} · _{{ ev.location }}_{% endif %}
+{% endfor %}
+
+{% endfor %}
+{% else %}
+_No events._
+{% endif %}
+## Free slots (work hours)
+
+{% for day, slots in brief.free_slots_by_day.items() %}
+**{{ day | day_label }}**:{% if slots %}{% for s in slots %} {{ s.start | fmt_time }}–{{ s.end | fmt_time }} ({{ s.duration_min }}m){% if not loop.last %},{% endif %}{% endfor %}{% else %} _none_{% endif %}
+{% endfor %}
+
+## Mail needs attention
+
+### Awaiting your reply ({{ brief.mail_attention.awaiting_reply|length }})
+{% for t in brief.mail_attention.awaiting_reply %}
+- **{{ t.subject or "(no subject)" }}** — {{ t.last_inbound_from }} · {{ t.last_date | fmt_dt }}
+{% else %}
+_None._
+{% endfor %}
+
+### Flagged ({{ brief.mail_attention.flagged|length }})
+{% for m in brief.mail_attention.flagged %}
+- **{{ m.subject or "(no subject)" }}** — {{ m.from_addr }} · {{ m.date | fmt_dt }}
+{% else %}
+_None._
+{% endfor %}
+
+### From VIPs ({{ brief.mail_attention.vip|length }})
+{% for m in brief.mail_attention.vip %}
+- **{{ m.subject or "(no subject)" }}** — {{ m.from_addr }} · {{ m.date | fmt_dt }}
+{% else %}
+_None._
+{% endfor %}
+
+{% if brief.meetings_with_prep %}
+## Meeting prep
+
+{% for ev in brief.meetings_with_prep %}
+### {{ ev.start | fmt_dt }} — {{ ev.title }}
+
+- **Attendees:** {{ ev.attendees|join(", ") }}
+{% if ev.location %}- **Location:** {{ ev.location }}{% endif %}
+{% if ev.prep_notes %}
+**Prep:** {{ ev.prep_notes }}
+{% endif %}
+{% if ev.prep_questions %}
+**Questions to prepare:**
+{% for q in ev.prep_questions %}
+- {{ q }}
+{% endfor %}
+{% endif %}
+{% if ev.related_threads %}
+**Related threads:**
+{% for t in ev.related_threads %}
+- {{ t.subject }} ({{ t.last_date | fmt_dt }})
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+---
+_Generated {{ brief.generated_at | fmt_dt(GENERATED_PATTERN) }}_

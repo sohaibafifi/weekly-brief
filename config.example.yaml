@@ -1,0 +1,71 @@
+timezone: Europe/Paris
+output_dir: ~/Documents/WeeklyBrief
+locale: fr
+
+work_hours:
+  monday:    [["08:00", "19:00"]]
+  tuesday:   [["08:00", "19:00"]]
+  wednesday: [["08:00", "19:00"]]
+  thursday:  [["08:00", "19:00"]]
+  friday:    [["08:00", "19:00"]]
+
+imap:
+  host: imap.example.com
+  port: 993
+  user: me@example.com
+  password_env: IMAP_PWD
+  inbox: INBOX
+  sent: "Sent"
+
+smtp:
+  host: smtp.example.com
+  port: 465
+  user: me@example.com
+  password_env: SMTP_PWD
+  to: me@example.com
+
+calendars:
+  # Single URL (compact form):
+  - name: Personal
+    category: personal
+    url: https://example.com/personal.ics
+
+  # Several URLs grouped under one category — each feed appears as
+  # "<name> #1", "<name> #2", … in source_name (used for the meeting-prep block).
+  - name: Work
+    category: work
+    urls:
+      - https://example.com/work-main.ics
+      - https://example.com/work-team.ics
+      - https://example.com/work-shared.ics
+
+  # Multiple separate entries with the same `category` also work — useful when
+  # each feed has its own meaningful name.
+  - name: Family
+    category: family
+    url: https://example.com/family.ics
+  - name: Kids school
+    category: family
+    url: https://example.com/school.ics
+
+vips:
+  - boss@example.org
+  - "@important-client.com"
+
+mail_rules:
+  flagged: true
+  vip: true
+  awaiting_reply: true
+  awaiting_reply_lookback_days: 14
+  vip_lookback_days: 14
+  flagged_lookback_days: 30
+
+llm:
+  provider: mistral
+  model: mistral-large-latest
+  api_key_env: MISTRAL_API_KEY
+  features:
+    week_narrative: true
+    per_meeting_prep: true
+  max_tokens_total: 4000
+  base_url: https://api.mistral.ai/v1
