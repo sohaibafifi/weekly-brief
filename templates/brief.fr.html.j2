@@ -29,7 +29,7 @@
   {% if brief.narrative %}
   <section class="bg-white rounded-2xl shadow-sm p-6">
     <h2 class="text-lg font-semibold mb-2">La semaine à venir</h2>
-    <p class="leading-relaxed text-slate-700 whitespace-pre-line">{{ brief.narrative }}</p>
+    <div class="leading-relaxed text-slate-700 prose max-w-none">{{ brief.narrative | safe }}</div>
   </section>
   {% endif %}
 

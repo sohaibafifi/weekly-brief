@@ -1,10 +1,25 @@
 """End-to-end pipeline: fetch → analyze → enrich → render → store/send."""
 from __future__ import annotations
 
+import html
 import logging
+import re
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _html_to_text(s: str) -> str:
+    """Best-effort HTML → plain-text for email body."""
+    if not s:
+        return s
+    s = re.sub(r"</(p|h[1-6]|li|div|tr)>|<br\s*/?>", "\n", s, flags=re.IGNORECASE)
+    s = re.sub(r"<li[^>]*>", "- ", s, flags=re.IGNORECASE)
+    s = _TAG_RE.sub("", s)
+    s = html.unescape(s)
+    return re.sub(r"\n{3,}", "\n\n", s).strip()
 
 from weekly_brief.calendars import collect_events, free_slots
 from weekly_brief.config import AppConfig
@@ -124,16 +139,31 @@ def run_pipeline(
     week_dir = write_outputs(cfg.output_dir, brief.week_iso, html, markdown, raw)
 
     if send:
-        subject_prefix = "Brief hebdomadaire" if cfg.locale == "fr" else "Weekly brief"
+        is_fr = cfg.locale == "fr"
+        subject_prefix = "Brief hebdomadaire" if is_fr else "Weekly brief"
         subject = (
             f"{subject_prefix} — {brief.week_iso} "
             f"{brief.week_start.strftime('%Y-%m-%d')}…{brief.week_end.strftime('%Y-%m-%d')}"
         )
+        if narrative:
+            abstract = _html_to_text(narrative)
+        else:
+            abstract = (
+                "Aperçu indisponible (LLM non configuré)."
+                if is_fr
+                else "Overview unavailable (LLM not configured)."
+            )
+        attach_note = (
+            "Détails complets dans la pièce jointe HTML."
+            if is_fr
+            else "Full details in the attached HTML file."
+        )
+        body = f"{abstract}\n\n— {attach_note}\n"
         try:
             send_email(
                 cfg,
                 subject,
-                markdown,
+                body,
                 html_attachment=html,
                 html_filename=f"weekly-brief-{brief.week_iso}.html",
                 debug=debug_smtp,

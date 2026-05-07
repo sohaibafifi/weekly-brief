@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 
 import httpx
 
@@ -11,9 +12,21 @@ from weekly_brief.models import Event
 
 log = logging.getLogger(__name__)
 
+_FENCE_OPEN = re.compile(r"^\s*```[a-zA-Z0-9_-]*\s*\n?")
+_FENCE_CLOSE = re.compile(r"\n?\s*```\s*$")
+
+
+def _strip_code_fences(text: str) -> str:
+    """Strip leading/trailing markdown code fences. Tolerant to one-sided fences
+    (e.g. when LLM output is truncated by max_tokens before the closing fence)."""
+    s = text.strip()
+    s = _FENCE_OPEN.sub("", s)
+    s = _FENCE_CLOSE.sub("", s)
+    return s.strip()
+
 NARRATIVE_SYSTEM = (
     "You are a concise executive assistant. Write the user's week-ahead overview "
-    "in the user's locale (fr=French, en=English). ≤120 words. No headers, no bullets, plain text. "
+    "in the user's locale (fr=French, en=English). ≤120 words.  In HTML to be included in a page. "
     "Tone: calm, direct. Reference key events and free time. Never invent facts. "
     "If locale=fr, write entirely in French."
 )
@@ -74,11 +87,11 @@ class MistralClient:
                             ),
                         },
                     ],
-                    "max_tokens": 350,
+                    "max_tokens": 1200,
                     "temperature": 0.4,
                 }
             )
-            return data["choices"][0]["message"]["content"].strip()
+            return _strip_code_fences(data["choices"][0]["message"]["content"])
         except Exception as exc:
             log.warning("Narrative LLM call failed: %s", exc)
             return ""
