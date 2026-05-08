@@ -34,17 +34,6 @@ uv run weekly-brief run --no-email     # build + write files only
 uv run weekly-brief run --week current # current week (default: next)
 ```
 
-## Connectivity tests
-
-```bash
-uv run weekly-brief diagnose      # ICS + IMAP + SMTP + LLM + Notion in one shot
-uv run weekly-brief test-ics
-uv run weekly-brief test-imap
-uv run weekly-brief test-smtp
-uv run weekly-brief test-llm
-uv run weekly-brief test-notion
-```
-
 ## Notion integration (optional)
 
 Each Sunday run also publishes the brief as a row in a Notion database. To enable:
@@ -60,10 +49,10 @@ Each Sunday run also publishes the brief as a row in a Notion database. To enabl
      database_id: "abc123…"
      title_prop: Name      # exact column label
      week_prop: Week       # exact date-column label (or "" to skip)
+     summary_prop: Summary # rich_text column for narrative (or "" to skip)
    ```
-6. `uv run weekly-brief test-notion` to verify.
 
-Behaviour: each weekly run finds an existing row titled `Brief <ISO-week>`. If found → in-place update (archive old blocks, write fresh ones). If not → create new row. No duplicates.
+Behaviour: each weekly run finds an existing row titled `Brief <ISO-week>`. If found → soft-archive it (recoverable from Notion trash 30d) and create a fresh row.
 
 ## Schedule (macOS launchd, Sunday 18:00)
 
@@ -92,12 +81,6 @@ You can also list several entries with the same `category` if you want each feed
 
 VIP entries can be plain emails or domains prefixed with `@`. Work hours per weekday are arbitrary intervals; weekends omitted = no free-slot computation there.
 
-## Tests
-
-```bash
-uv run pytest
-```
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
@@ -108,5 +91,4 @@ MIT — see [LICENSE](LICENSE).
 src/weekly_brief/   pipeline modules
 templates/          Jinja2 HTML + Markdown
 ops/                launchd plist + install.sh + run.sh
-tests/              pytest unit tests
 ```

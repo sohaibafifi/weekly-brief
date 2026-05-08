@@ -57,19 +57,6 @@ class MistralClient:
         r.raise_for_status()
         return r.json()
 
-    def ping(self) -> str:
-        if not self.enabled:
-            raise RuntimeError("Mistral API key missing")
-        data = self._post(
-            {
-                "model": self.cfg.model,
-                "messages": [{"role": "user", "content": "say 'ok'"}],
-                "max_tokens": 5,
-                "temperature": 0,
-            }
-        )
-        return data["choices"][0]["message"]["content"]
-
     def week_narrative(self, summary: dict, locale: str = "en") -> str:
         if not (self.enabled and self.cfg.features.week_narrative):
             return ""

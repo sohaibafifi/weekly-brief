@@ -318,24 +318,6 @@ class NotionClient:
         r.raise_for_status()
         return r.json()
 
-    def _get(self, path: str) -> dict:
-        r = httpx.get(self._url(path), headers=self._headers(), timeout=30)
-        r.raise_for_status()
-        return r.json()
-
-    def _delete(self, path: str) -> dict:
-        r = httpx.delete(self._url(path), headers=self._headers(), timeout=30)
-        r.raise_for_status()
-        return r.json()
-
-    def ping(self) -> str:
-        if not self.cfg.api_key:
-            raise RuntimeError("Notion API key missing")
-        if not self.cfg.database_id:
-            raise RuntimeError("Notion database_id missing")
-        data = self._get(f"/databases/{self.cfg.database_id}")
-        return data.get("title", [{}])[0].get("plain_text", "(no title)") if data.get("title") else data.get("id", "")
-
     def find_page_by_title(self, title: str) -> str | None:
         data = self._post(
             f"/databases/{self.cfg.database_id}/query",
@@ -349,23 +331,6 @@ class NotionClient:
         )
         results = data.get("results", [])
         return results[0]["id"] if results else None
-
-    def archive_children(self, page_id: str) -> int:
-        deleted = 0
-        cursor: str | None = None
-        while True:
-            qs = f"?start_cursor={cursor}" if cursor else ""
-            data = self._get(f"/blocks/{page_id}/children{qs}")
-            for block in data.get("results", []):
-                try:
-                    self._delete(f"/blocks/{block['id']}")
-                    deleted += 1
-                except Exception as exc:
-                    log.warning("Could not delete block %s: %s", block.get("id"), exc)
-            if not data.get("has_more"):
-                break
-            cursor = data.get("next_cursor")
-        return deleted
 
     def append_blocks(self, page_id: str, blocks: list[dict]) -> None:
         for i in range(0, len(blocks), 100):

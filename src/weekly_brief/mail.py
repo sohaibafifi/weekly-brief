@@ -104,9 +104,3 @@ class MailClient:
             for m in box.fetch(AND(date_gte=since), mark_seen=False, bulk=True, limit=2000):
                 out.append(_to_msg(m, self.cfg.imap.sent))
         return out
-
-    def ping(self) -> dict[str, int]:
-        with self._open() as box:
-            box.folder.set(self.cfg.imap.inbox)
-            count = sum(1 for _ in box.fetch(AND(all=True), mark_seen=False, bulk=True, limit=1))
-        return {"inbox_reachable": count}
