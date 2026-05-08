@@ -69,3 +69,18 @@ llm:
     per_meeting_prep: true
   max_tokens_total: 4000
   base_url: https://api.mistral.ai/v1
+
+# Optional: publish each weekly brief as a row in a Notion database.
+# Steps:
+#   1. https://www.notion.so/profile/integrations → New internal integration → copy token into NOTION_API_KEY env.
+#   2. Create a database with a Title property and a Date property.
+#   3. Click "..." on database → "Connections" → add your integration.
+#   4. Copy the database ID from its URL (32-char hex, no dashes).
+notion:
+  enabled: false
+  api_key_env: NOTION_API_KEY
+  database_id: ""
+  title_prop: Name      # exact label of the title column
+  week_prop: Week       # exact label of the date column (set to "" to disable)
+  summary_prop: Summary # rich_text column for narrative (set to "" to disable)
+  url_prop: ""          # optional URL property; leave "" to disable

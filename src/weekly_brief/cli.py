@@ -162,6 +162,19 @@ def diagnose(config: Path = typer.Option(None, "--config", "-c")):
     except Exception as exc:
         rprint(f"  [red]✗[/red] {type(exc).__name__}: {exc}")
 
+    rprint("[bold]Notion[/bold]")
+    try:
+        from weekly_brief.notion import NotionClient
+
+        client = NotionClient(cfg.notion)
+        if not client.enabled:
+            rprint("  [yellow]disabled[/yellow]")
+        else:
+            out = client.ping()
+            rprint(f"  [green]✓[/green] DB OK: {out!r}")
+    except Exception as exc:
+        rprint(f"  [red]✗[/red] {type(exc).__name__}: {exc}")
+
 
 @app.command("test-llm")
 def test_llm(config: Path = typer.Option(None, "--config", "-c")):
@@ -171,6 +184,28 @@ def test_llm(config: Path = typer.Option(None, "--config", "-c")):
 
     out = MistralClient(cfg.llm).ping()
     rprint(f"[green]✓[/green] Mistral OK: {out!r}")
+
+
+@app.command("test-notion")
+def test_notion(config: Path = typer.Option(None, "--config", "-c")):
+    """Verify Notion API key + database access."""
+    _setup_logging(verbose=True)
+    cfg = _cfg(config)
+    from weekly_brief.notion import NotionClient
+
+    client = NotionClient(cfg.notion)
+    if not client.enabled:
+        rprint(
+            "[yellow]Notion disabled.[/yellow] Set notion.enabled=true, fill database_id, "
+            f"export {cfg.notion.api_key_env}."
+        )
+        raise typer.Exit(code=1)
+    try:
+        out = client.ping()
+    except Exception as exc:
+        rprint(f"[red]✗ Notion test FAILED:[/red] {type(exc).__name__}: {exc}")
+        raise typer.Exit(code=1)
+    rprint(f"[green]✓[/green] Notion DB reachable: {out!r}")
 
 
 if __name__ == "__main__":

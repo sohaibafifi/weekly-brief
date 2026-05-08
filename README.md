@@ -37,11 +37,33 @@ uv run weekly-brief run --week current # current week (default: next)
 ## Connectivity tests
 
 ```bash
+uv run weekly-brief diagnose      # ICS + IMAP + SMTP + LLM + Notion in one shot
 uv run weekly-brief test-ics
 uv run weekly-brief test-imap
 uv run weekly-brief test-smtp
 uv run weekly-brief test-llm
+uv run weekly-brief test-notion
 ```
+
+## Notion integration (optional)
+
+Each Sunday run also publishes the brief as a row in a Notion database. To enable:
+
+1. Visit https://www.notion.so/profile/integrations → **New internal integration** → copy the secret token into `NOTION_API_KEY`.
+2. Create a Notion database with at least a **Title** column and a **Date** column.
+3. On the database, click **…** → **Connections** → add your integration so it can write.
+4. Copy the database ID from its URL (the 32-char hex string before `?v=…`).
+5. Edit `config.yaml`:
+   ```yaml
+   notion:
+     enabled: true
+     database_id: "abc123…"
+     title_prop: Name      # exact column label
+     week_prop: Week       # exact date-column label (or "" to skip)
+   ```
+6. `uv run weekly-brief test-notion` to verify.
+
+Behaviour: each weekly run finds an existing row titled `Brief <ISO-week>`. If found → in-place update (archive old blocks, write fresh ones). If not → create new row. No duplicates.
 
 ## Schedule (macOS launchd, Sunday 18:00)
 

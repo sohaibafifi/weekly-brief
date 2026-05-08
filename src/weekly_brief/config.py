@@ -85,6 +85,22 @@ class LLMFeatures(BaseModel):
     per_meeting_prep: bool = True
 
 
+class NotionConfig(BaseModel):
+    enabled: bool = False
+    api_key_env: str = "NOTION_API_KEY"
+    database_id: str = ""
+    title_prop: str = "Name"
+    week_prop: str = "Week"
+    summary_prop: str = "Summary"  # rich_text property; "" to disable
+    url_prop: str = ""  # optional URL property; "" to disable
+    notion_version: str = "2022-06-28"
+    base_url: str = "https://api.notion.com/v1"
+
+    @property
+    def api_key(self) -> str | None:
+        return os.environ.get(self.api_key_env) or None
+
+
 class LLMConfig(BaseModel):
     provider: Literal["mistral"] = "mistral"
     model: str = "mistral-large-latest"
@@ -109,6 +125,7 @@ class AppConfig(BaseModel):
     vips: list[str] = Field(default_factory=list)
     mail_rules: MailRules = Field(default_factory=MailRules)
     llm: LLMConfig = Field(default_factory=LLMConfig)
+    notion: NotionConfig = Field(default_factory=NotionConfig)
 
     @field_validator("output_dir", mode="before")
     @classmethod

@@ -41,6 +41,7 @@ if [[ ! -f "$SECRETS_DIR/secrets.env" ]]; then
 IMAP_PWD=
 SMTP_PWD=
 MISTRAL_API_KEY=
+NOTION_API_KEY=
 EOF
   chmod 600 "$SECRETS_DIR/secrets.env"
   echo "Created secrets template at $SECRETS_DIR/secrets.env — fill it in."

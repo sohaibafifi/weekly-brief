@@ -1,25 +1,12 @@
 """End-to-end pipeline: fetch → analyze → enrich → render → store/send."""
 from __future__ import annotations
 
-import html
 import logging
-import re
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 
-_TAG_RE = re.compile(r"<[^>]+>")
-
-
-def _html_to_text(s: str) -> str:
-    """Best-effort HTML → plain-text for email body."""
-    if not s:
-        return s
-    s = re.sub(r"</(p|h[1-6]|li|div|tr)>|<br\s*/?>", "\n", s, flags=re.IGNORECASE)
-    s = re.sub(r"<li[^>]*>", "- ", s, flags=re.IGNORECASE)
-    s = _TAG_RE.sub("", s)
-    s = html.unescape(s)
-    return re.sub(r"\n{3,}", "\n\n", s).strip()
+from weekly_brief.textutil import html_to_text as _html_to_text
 
 from weekly_brief.calendars import collect_events, free_slots
 from weekly_brief.config import AppConfig
@@ -28,6 +15,7 @@ from weekly_brief.mail import MailClient
 from weekly_brief.meetings import attach_threads_to_events
 from weekly_brief.models import Event
 from weekly_brief.notify import send_email
+from weekly_brief.notion import NotionClient
 from weekly_brief.render import build_brief, render_html, render_markdown
 from weekly_brief.store import write_outputs
 from weekly_brief.threads import build_threads, filter_awaiting, mark_awaiting_reply
@@ -137,6 +125,17 @@ def run_pipeline(
         "generated_at": datetime.now().isoformat(),
     }
     week_dir = write_outputs(cfg.output_dir, brief.week_iso, html, markdown, raw)
+
+    # Notion publish (best-effort; never fails the run).
+    notion_client = NotionClient(cfg.notion)
+    if notion_client.enabled:
+        try:
+            page_id = notion_client.publish(brief)
+            log.info("Notion: published brief to page %s", page_id)
+        except Exception as exc:
+            log.error("Notion publish failed: %s", exc)
+    else:
+        log.debug("Notion publish skipped (not enabled)")
 
     if send:
         is_fr = cfg.locale == "fr"
