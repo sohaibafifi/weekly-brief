@@ -12,6 +12,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from weekly_brief.calendars import group_by_category, group_by_day
 from weekly_brief.models import Event, Slot, Thread
+from weekly_brief.textutil import fmt_hours
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent.parent / "templates"
 if not TEMPLATES_DIR.exists():
@@ -120,6 +121,7 @@ def _bind_filters(env: Environment, brief: Brief) -> None:
     env.filters["fmt_time"] = _fmt_time_factory(tz, brief.locale)
     env.filters["cat_label"] = _category_label_factory(brief.locale)
     env.filters["day_label"] = _day_label_factory(brief.locale)
+    env.filters["dur_h"] = fmt_hours
     env.globals["HEADER_DATE_PATTERN"] = HEADER_DATE_PATTERN
     env.globals["GENERATED_PATTERN"] = GENERATED_PATTERN
     env.globals["DAY_LABEL_PATTERN"] = DAY_LABEL_PATTERN

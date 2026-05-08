@@ -24,7 +24,7 @@ _No events._
 ## Free slots (work hours)
 
 {% for day, slots in brief.free_slots_by_day.items() %}
-**{{ day | day_label }}**:{% if slots %}{% for s in slots %} {{ s.start | fmt_time }}–{{ s.end | fmt_time }} ({{ s.duration_min }}m){% if not loop.last %},{% endif %}{% endfor %}{% else %} _none_{% endif %}
+**{{ day | day_label }}**:{% if slots %}{% for s in slots %} {{ s.start | fmt_time }}–{{ s.end | fmt_time }} ({{ s.duration_min | dur_h }}){% if not loop.last %},{% endif %}{% endfor %}{% else %} _none_{% endif %}
 {% endfor %}
 
 ## Mail needs attention

@@ -77,7 +77,7 @@
             <p class="text-[10px] uppercase text-slate-500 mt-1">Free</p>
             <ul class="text-xs space-y-0.5">
               {% for s in slots %}
-                <li class="text-emerald-700">{{ s.start | fmt_time }}–{{ s.end | fmt_time }} ({{ s.duration_min }}m)</li>
+                <li class="text-emerald-700">{{ s.start | fmt_time }}–{{ s.end | fmt_time }} ({{ s.duration_min | dur_h }})</li>
               {% endfor %}
             </ul>
           {% else %}

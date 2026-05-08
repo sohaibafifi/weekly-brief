@@ -12,7 +12,7 @@ from babel.dates import format_datetime as babel_format_datetime
 
 from weekly_brief.config import NotionConfig
 from weekly_brief.render import Brief
-from weekly_brief.textutil import html_to_text
+from weekly_brief.textutil import fmt_hours, html_to_text
 
 log = logging.getLogger(__name__)
 
@@ -229,7 +229,7 @@ def build_blocks(brief: Brief) -> list[dict[str, Any]]:
         for s in slots:
             line = (
                 f"{_fmt_time(s.start, locale, tz)} – {_fmt_time(s.end, locale, tz)}"
-                f"  ({s.duration_min} min)"
+                f"  ({fmt_hours(s.duration_min)})"
             )
             children.append(_bul(_rich([(line, {"color": "green"})])))
         summary = f"{day_label}  ·  {len(slots)}"
